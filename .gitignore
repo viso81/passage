@@ -1,4 +1,52 @@
-passage-cmd.rar
-*.lock
-
+# Rust 构建输出
 /target
+**/target
+
+# Cargo
+# Cargo.lock   # CLI 工具建议提交 Cargo.lock（保持版本一致）
+
+# Build artifacts
+*.pdb
+*.o
+*.so
+*.dylib
+*.dll
+
+# Rust 临时文件
+**/*.rs.bk
+rustc-*.pdb
+
+# Editor / IDE 文件
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# 操作系统垃圾
+Thumbs.db
+
+# 日志和临时文件
+*.log
+*.tmp
+*.bak
+
+# 环境变量（非常重要！）
+.env
+
+# 性能分析文件
+flamegraph.svg
+perf.data*
+callgrind.out.*
+
+# 测试覆盖率
+lcov.info
+**/coverage/
+
+# 文档生成
+**/doc/
+**/target/doc/
+
+# 自定义
+passage-cmd.rar
