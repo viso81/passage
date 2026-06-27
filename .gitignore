@@ -1,3 +1,4 @@
-/target
 passage-cmd.rar
-Cargo.lock
+*.lock
+
+/target
