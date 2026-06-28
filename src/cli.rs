@@ -1,10 +1,11 @@
+///! # 命令行
 use crate::processor::get_config_file_content;
 use crate::serv_info::ServInfo;
 use anyhow::Result;
 use clap::{Args, Parser, Subcommand};
 use std::path::PathBuf;
 
-/// # 命令行结构
+/// 命令行结构
 #[derive(Parser)]
 #[command(name = "passage-cmd")]
 pub struct Cli {
@@ -29,7 +30,14 @@ pub struct ArgGetAllSubscriptionLinks {
     pub allowd: Vec<String>,
 }
 
-/// # 获取所有服务器订阅
+/// 获取所有服务器订阅
+///
+/// # 参数
+/// - `opt`: 子命令和参数获取
+///
+/// # 返回值
+/// 返回SerInfo类型,其中包括所有获取的代理参数
+///
 pub fn cmd_get_all_subscription_links(opt: &ArgGetAllSubscriptionLinks) -> Result<()> {
     let mut m = ServInfo::new_mieru();
     let mut h = ServInfo::new_hysteria2();

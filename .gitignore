@@ -3,7 +3,7 @@
 **/target
 
 # Cargo
-# Cargo.lock   # CLI 工具建议提交 Cargo.lock（保持版本一致）
+# Cargo.lock
 
 # Build artifacts
 *.pdb
@@ -49,4 +49,5 @@ lcov.info
 **/target/doc/
 
 # 自定义
+/asset
 passage-cmd.rar

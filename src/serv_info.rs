@@ -1,5 +1,5 @@
 use crate::processor::{
-    get_json_field_to_string, get_json_field_to_u16, json_array_only_first_element_warning,
+    json_array_only_first_element_warning, json_get_field_to_string, json_get_field_to_u16,
 };
 use anyhow::{Context, Result, bail};
 use serde_json::Value;
@@ -50,11 +50,11 @@ impl ServInfo {
                     json_array_only_first_element_warning(&json, json_path);
                 }
 
-                let server = get_json_field_to_string(&json, "/profiles/0/servers/0/ipAddress")?;
+                let server = json_get_field_to_string(&json, "/profiles/0/servers/0/ipAddress")?;
                 let port =
-                    get_json_field_to_u16(&json, "/profiles/0/servers/0/portBindings/0/port")?;
-                let username = get_json_field_to_string(&json, "/profiles/0/user/name")?;
-                let password = get_json_field_to_string(&json, "/profiles/0/user/password")?;
+                    json_get_field_to_u16(&json, "/profiles/0/servers/0/portBindings/0/port")?;
+                let username = json_get_field_to_string(&json, "/profiles/0/user/name")?;
+                let password = json_get_field_to_string(&json, "/profiles/0/user/password")?;
 
                 info.push(InfoMieru {
                     server,
@@ -65,7 +65,7 @@ impl ServInfo {
             }
             // Hysteria2服务器
             ServInfo::Hysteria2(info) => {
-                let value = get_json_field_to_string(&json, "/server")?;
+                let value = json_get_field_to_string(&json, "/server")?;
                 let (addr_part, port_str) = match value.rsplit_once(":") {
                     Some(a) => a,
                     None => {
@@ -74,7 +74,7 @@ impl ServInfo {
                 };
                 let server = addr_part.to_string();
                 let port = port_str.parse::<u16>().context("端口解析失败!")?;
-                let password = get_json_field_to_string(&json, "/auth")?;
+                let password = json_get_field_to_string(&json, "/auth")?;
 
                 info.push(InfoHysteria2 {
                     server,
