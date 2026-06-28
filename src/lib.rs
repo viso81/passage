@@ -19,6 +19,10 @@ pub fn run() -> anyhow::Result<()> {
             let map = processor::regex_yaml_locate_key("proxies:", buf)?;
             println!("{:#?}", map);
         }
+        cli::Commands::Exp2(opt) => {
+            // todo
+            processor::backup_with_sequence(opt.path, opt.out)?;
+        }
         cli::Commands::GetAllLinks(opt) => {
             cli::cmd_get_all_subscription_links(&opt)?;
         }

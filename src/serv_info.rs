@@ -2,18 +2,19 @@ use crate::processor::{
     json_array_only_first_element_warning, json_get_field_to_string, json_get_field_to_u16,
 };
 use anyhow::{Context, Result, bail};
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 /// # 服务器信息数据结构  
 #[allow(unused)]
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum ServInfo {
     Hysteria2(Vec<InfoHysteria2>),
     Mieru(Vec<InfoMieru>),
 }
 
 #[allow(unused)]
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct InfoHysteria2 {
     server: String,
     port: u16,
@@ -21,7 +22,7 @@ pub struct InfoHysteria2 {
 }
 
 #[allow(unused)]
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct InfoMieru {
     server: String,
     port: u16,

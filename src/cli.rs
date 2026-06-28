@@ -16,12 +16,19 @@ pub struct Cli {
 #[derive(Subcommand, Debug)]
 pub enum Commands {
     Exp(ArgExp),
+    Exp2(ArgExp2),
     GetAllLinks(ArgGetAllSubscriptionLinks),
 }
 // 参数
 #[derive(Args, Debug)]
 pub struct ArgExp {
     pub path: PathBuf,
+}
+#[derive(Args, Debug)]
+pub struct ArgExp2 {
+    pub path: PathBuf,
+    #[arg(short, long, default_value = r#".\"#)]
+    pub out: PathBuf,
 }
 #[derive(Args, Debug)]
 pub struct ArgGetAllSubscriptionLinks {
@@ -106,7 +113,16 @@ pub fn cmd_get_all_subscription_links(opt: &ArgGetAllSubscriptionLinks) -> Resul
         }
     }
 
-    println!("{:?}", m);
-    println!("{:?}", h);
+    // println!("{:#?}", m);
+    // println!("{:#?}", h);
+    crate::processor::save_data_to_file(&h, r".\h.json".to_string())?;
+    crate::processor::save_data_to_file(&m, r".\m.json".to_string())?;
+    let mut mm = ServInfo::new_mieru();
+    let mut hh = ServInfo::new_hysteria2();
+    mm = crate::processor::load_data_from_file(r".\m.json")?;
+    hh = crate::processor::load_data_from_file(r".\h.json")?;
+    println!("{:#?}", mm);
+    println!("{:#?}", hh);
+
     Ok(())
 }

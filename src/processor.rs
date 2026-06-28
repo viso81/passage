@@ -1,5 +1,6 @@
-use anyhow::{Context, Result, anyhow};
-use std::io::{BufRead, Read};
+use anyhow::{Context, Result, anyhow, bail};
+use std::fs;
+use std::io::{BufRead, Read, Write};
 use std::io::{BufReader, ErrorKind};
 use std::path::Path;
 
@@ -17,6 +18,56 @@ pub fn read_to_buf<T: AsRef<Path>>(path: T) -> Result<BufReader<std::fs::File>> 
     })?;
 
     Ok(BufReader::new(content))
+}
+
+pub fn save_data_to_file<T: serde::Serialize, P: AsRef<std::path::Path>>(
+    data: &T,
+    path: P,
+) -> Result<()> {
+    let json_string = serde_json::to_string_pretty(data)?;
+    let mut file = std::fs::File::create(path)?;
+    file.write_all(json_string.as_bytes())?;
+    Ok(())
+}
+
+pub fn load_data_from_file<T: serde::de::DeserializeOwned, P: AsRef<std::path::Path>>(
+    path: P,
+) -> Result<T> {
+    let json_string = fs::read_to_string(path)?;
+    let data: T = serde_json::from_str(&json_string)?;
+    Ok(data)
+}
+
+pub fn backup_with_sequence<P: AsRef<std::path::Path>>(in_path: P, to_path: P) -> Result<()> {
+    let file_name = in_path
+        .as_ref()
+        .file_name()
+        .ok_or_else(|| anyhow::anyhow!("无效文件名"))?
+        .to_string_lossy()
+        .into_owned();
+
+    let mut counter = 1;
+    let backup_path = loop {
+        let backup_name = format!("{}.bak.{}", file_name, counter);
+        let candidate = to_path.as_ref().join(&backup_name);
+        if !candidate.exists() {
+            break candidate;
+        }
+        counter += 1;
+        if counter > 1000 {
+            anyhow::bail!("备份文件太多!");
+        }
+    };
+
+    match std::fs::copy(in_path, &backup_path) {
+        Ok(_) => {
+            print!("已备份: {}", &backup_path.display());
+            Ok(())
+        }
+        Err(e) => {
+            bail!("{}", e);
+        }
+    }
 }
 
 use chardetng::{EncodingDetector, Iso2022JpDetection, Utf8Detection};
@@ -118,7 +169,7 @@ pub fn get_config_file_content<P: AsRef<std::path::Path>>(path: P) -> Result<Str
     Ok(downloaded_string)
 }
 
-use serde_json::{Map, Value, json};
+use serde_json::Value;
 
 /// 数组有多个元素时提醒只使用了第一个
 pub fn json_array_only_first_element_warning(json: &Value, field: &str) {
