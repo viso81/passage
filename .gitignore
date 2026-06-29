@@ -49,7 +49,7 @@ lcov.info
 **/target/doc/
 
 # 自定义
-/assets/ip/*
+/assets/ip/
 /assets/pass/log/*
 /assets/pass/config/*.yaml_bak
 /assets/pass/config/*.metadb
