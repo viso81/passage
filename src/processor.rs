@@ -1,3 +1,4 @@
+//! processor
 use anyhow::{Context, Result, anyhow, bail};
 use std::fs;
 use std::io::{BufRead, Read, Write};
@@ -20,16 +21,20 @@ pub fn read_to_buf<T: AsRef<Path>>(path: T) -> Result<BufReader<std::fs::File>> 
     Ok(BufReader::new(content))
 }
 
+/// 序列化数据并保存到文件
 pub fn save_data_to_file<T: serde::Serialize, P: AsRef<std::path::Path>>(
     data: &T,
     path: P,
 ) -> Result<()> {
     let json_string = serde_json::to_string_pretty(data)?;
+    if let Some(p) = path.as_ref().parent() {
+        fs::create_dir_all(p)?;
+    }
     let mut file = std::fs::File::create(path)?;
     file.write_all(json_string.as_bytes())?;
     Ok(())
 }
-
+/// 从文件读取并反序列到数据
 pub fn load_data_from_file<T: serde::de::DeserializeOwned, P: AsRef<std::path::Path>>(
     path: P,
 ) -> Result<T> {
@@ -37,7 +42,7 @@ pub fn load_data_from_file<T: serde::de::DeserializeOwned, P: AsRef<std::path::P
     let data: T = serde_json::from_str(&json_string)?;
     Ok(data)
 }
-
+/// 备份文件
 pub fn backup_with_sequence<P: AsRef<std::path::Path>>(in_path: P, to_path: P) -> Result<()> {
     let file_name = in_path
         .as_ref()
@@ -214,32 +219,61 @@ pub fn regex_match_to_txt_key_val(
 }
 */
 
-use std::collections::HashMap;
-///
-pub fn regex_yaml_locate_key(
-    key: &str,
-    file: BufReader<std::fs::File>,
-) -> Result<HashMap<String, HashMap<String, (String, usize)>>> {
-    let mut data: HashMap<String, HashMap<String, (String, usize)>> = HashMap::new();
-    let mut block_name: String = "".to_string();
-    let mut matched_key = false;
+pub enum YamlValue {
+    Num(usize),
+    Str(String),
+}
+/// 修改key_val类型的行
+pub fn regex_modify_key_val_node(
+    lines: &mut Vec<String>,
+    targets: (usize, YamlValue),
+    reg: Regex,
+) -> Result<()> {
+    let (num, value) = targets;
+    println!("{}行: 原为 {}", num, lines[num]);
+    let cap = reg
+        .captures(&lines[num])
+        .ok_or_else(|| anyhow::anyhow!("{}行: 修改失败!", num))?;
+    let val_match = cap
+        .get(2)
+        .ok_or_else(|| anyhow::anyhow!("{}行: 修改失败!", num))?;
+    lines[num] = match value {
+        YamlValue::Num(n) => format!("{}{}", &lines[num][..val_match.start()], n),
+        YamlValue::Str(s) => format!("{}\"{}\"", &lines[num][..val_match.start()], s),
+    };
+    println!("{}行: 现为 {}", num, lines[num]);
+    Ok(())
+}
 
-    let re1 = regex_new(r#"^[^\s!@#$%^&*()+=~`"'<>?/\\{}|,.]+[:_-]*:$"#)?;
-    let re2 = regex_new(r#"^\s+(?:-\s+)?([^\s:]+): (\S.*)$"#)?;
+/// 匹配yaml字段的正则表达式
+pub const REGEX_YAML_LEVEL_1_NODE: &str = r#"^[^\s!@#$%^&*()+=~`"'<>?/\\{}|,.]+[:_-]*:$"#;
+pub const REGEX_YAML_KEY_VAL: &str = r#"^\s+(?:-\s+)?([^\s:]+): (\S.*)$"#;
+
+use std::collections::HashMap;
+/// 定位第一级节点之下的段落并取出
+/// # 注意
+/// 不支持嵌套,只能取出第二层的数据
+pub fn regex_yaml_locate_key(
+    level_1_node: &str,
+    lines: &Vec<String>,
+) -> Result<HashMap<String, HashMap<String, (usize, String, String)>>> {
+    let mut data: HashMap<String, HashMap<String, (usize, String, String)>> = HashMap::new();
+    let mut block_name: String = "".to_string();
+    let mut matched_node = false;
+
+    let re1 = regex_new(REGEX_YAML_LEVEL_1_NODE)?;
+    let re2 = regex_new(REGEX_YAML_KEY_VAL)?;
     let mut cache_re = &re1;
 
-    for line in file.lines().enumerate() {
-        let (line_num, line_res) = line;
-        let line_str = line_res?;
-
-        if matched_key {
-            if re1.captures(&line_str).is_some() {
+    for (num, line) in lines.iter().enumerate() {
+        if matched_node {
+            if re1.captures(&line).is_some() {
                 break;
             }
         }
 
-        for cap in cache_re.captures_iter(&line_str) {
-            if matched_key {
+        for cap in cache_re.captures_iter(&line) {
+            if matched_node {
                 let txt = cap[0].to_string();
                 let key = cap[1].to_string();
                 let val = cap[2].to_string();
@@ -249,11 +283,11 @@ pub fn regex_yaml_locate_key(
                 }
                 data.entry(block_name.clone())
                     .or_insert_with(HashMap::new)
-                    .insert(key, (val, line_num));
+                    .insert(key, (num, val, txt));
             }
             let s = cap[0].to_string();
-            if s.to_string().eq(key) {
-                matched_key = true;
+            if s.to_string().eq(level_1_node) {
+                matched_node = true;
                 cache_re = &re2;
             }
         }

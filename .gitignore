@@ -49,5 +49,9 @@ lcov.info
 **/target/doc/
 
 # 自定义
-/asset
+/assets/ip/*
+/assets/pass/log/*
+/assets/pass/config/*.yaml_bak
+/assets/pass/config/*.metadb
+/assets/pass/config/*.db
 passage-cmd.rar

@@ -1,6 +1,9 @@
+//! lib
 mod cli;
 mod processor;
 mod serv_info;
+
+use std::io::BufRead;
 
 use clap::Parser;
 
@@ -16,7 +19,8 @@ pub fn run() -> anyhow::Result<()> {
             println!("{:?}", m);
             */
             let buf = processor::read_to_buf(opt.path)?;
-            let map = processor::regex_yaml_locate_key("proxies:", buf)?;
+            let mut lines = buf.lines().collect::<std::io::Result<Vec<String>>>()?;
+            let map = processor::regex_yaml_locate_key("proxies:", &lines)?;
             println!("{:#?}", map);
         }
         cli::Commands::Exp2(opt) => {

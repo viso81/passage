@@ -44,7 +44,6 @@ pub struct ArgGetAllSubscriptionLinks {
 ///
 /// # 返回值
 /// 返回SerInfo类型,其中包括所有获取的代理参数
-///
 pub fn cmd_get_all_subscription_links(opt: &ArgGetAllSubscriptionLinks) -> Result<()> {
     let mut m = ServInfo::new_mieru();
     let mut h = ServInfo::new_hysteria2();
@@ -113,16 +112,14 @@ pub fn cmd_get_all_subscription_links(opt: &ArgGetAllSubscriptionLinks) -> Resul
         }
     }
 
-    // println!("{:#?}", m);
-    // println!("{:#?}", h);
-    crate::processor::save_data_to_file(&h, r".\h.json".to_string())?;
-    crate::processor::save_data_to_file(&m, r".\m.json".to_string())?;
-    let mut mm = ServInfo::new_mieru();
-    let mut hh = ServInfo::new_hysteria2();
-    mm = crate::processor::load_data_from_file(r".\m.json")?;
-    hh = crate::processor::load_data_from_file(r".\h.json")?;
+    crate::processor::save_data_to_file(&h, r".\assets\temp\Hysteria2.tmp".to_string())?;
+    crate::processor::save_data_to_file(&m, r".\assets\temp\Mieru.tmp".to_string())?;
+    println!("获取完成.");
+    /*
+    let mm: ServInfo = crate::processor::load_data_from_file(r".\assets\temp\Mieru.json")?;
+    let hh: ServInfo = crate::processor::load_data_from_file(r".\assets\temp\Hysteria2.json")?;
     println!("{:#?}", mm);
     println!("{:#?}", hh);
-
+    */
     Ok(())
 }

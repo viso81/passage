@@ -1,7 +1,8 @@
+//! serv_info
 use crate::processor::{
     json_array_only_first_element_warning, json_get_field_to_string, json_get_field_to_u16,
 };
-use anyhow::{Context, Result, bail};
+use anyhow::{bail, Context, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
