@@ -1,8 +1,8 @@
 //! processor
 use anyhow::{Context, Result, anyhow, bail};
 use std::fs;
-use std::io::{BufRead, Read, Write};
 use std::io::{BufReader, ErrorKind};
+use std::io::{Read, Write};
 use std::path::Path;
 
 /// 读取文件内容返回BufReader
@@ -34,6 +34,7 @@ pub fn save_data_to_file<T: serde::Serialize, P: AsRef<std::path::Path>>(
     file.write_all(json_string.as_bytes())?;
     Ok(())
 }
+
 /// 从文件读取并反序列到数据
 pub fn load_data_from_file<T: serde::de::DeserializeOwned, P: AsRef<std::path::Path>>(
     path: P,
@@ -42,6 +43,7 @@ pub fn load_data_from_file<T: serde::de::DeserializeOwned, P: AsRef<std::path::P
     let data: T = serde_json::from_str(&json_string)?;
     Ok(data)
 }
+
 /// 备份文件
 pub fn backup_with_sequence<P: AsRef<std::path::Path>>(in_path: P, to_path: P) -> Result<()> {
     let file_name = in_path
@@ -218,25 +220,30 @@ pub fn regex_match_to_txt_key_val(
     // todo
 }
 */
-
+#[derive(Debug)]
 pub enum YamlValue {
     Num(usize),
     Str(String),
 }
 /// 修改key_val类型的行
+/// # 参数
+/// lines : 待修改文本
+/// targets : 修改行号，修改后的key
+/// reg : 修改参考的正则表达式
 pub fn regex_modify_key_val_node(
     lines: &mut Vec<String>,
     targets: (usize, YamlValue),
-    reg: Regex,
+    reg: &Regex,
 ) -> Result<()> {
     let (num, value) = targets;
     println!("{}行: 原为 {}", num, lines[num]);
+    // println!("{}行: 将修改 {:?}", num, value);
     let cap = reg
         .captures(&lines[num])
-        .ok_or_else(|| anyhow::anyhow!("{}行: 修改失败!", num))?;
+        .ok_or_else(|| anyhow::anyhow!("{}行: 正则表达式匹配修改失败!", num))?;
     let val_match = cap
         .get(2)
-        .ok_or_else(|| anyhow::anyhow!("{}行: 修改失败!", num))?;
+        .ok_or_else(|| anyhow::anyhow!("{}行: 获取数值失败!", num))?;
     lines[num] = match value {
         YamlValue::Num(n) => format!("{}{}", &lines[num][..val_match.start()], n),
         YamlValue::Str(s) => format!("{}\"{}\"", &lines[num][..val_match.start()], s),
@@ -250,15 +257,14 @@ pub const REGEX_YAML_LEVEL_1_NODE: &str = r#"^[^\s!@#$%^&*()+=~`"'<>?/\\{}|,.]+[
 pub const REGEX_YAML_KEY_VAL: &str = r#"^\s+(?:-\s+)?([^\s:]+): (\S.*)$"#;
 
 use std::collections::HashMap;
+pub type YamlMap = HashMap<String, YamlServInfo>;
+pub type YamlServInfo = HashMap<String, (usize, String, String)>;
 /// 定位第一级节点之下的段落并取出
 /// # 注意
 /// 不支持嵌套,只能取出第二层的数据
-pub fn regex_yaml_locate_key(
-    level_1_node: &str,
-    lines: &Vec<String>,
-) -> Result<HashMap<String, HashMap<String, (usize, String, String)>>> {
-    let mut data: HashMap<String, HashMap<String, (usize, String, String)>> = HashMap::new();
-    let mut block_name: String = "".to_string();
+pub fn regex_yaml_locate_key(level_1_node: &str, lines: &Vec<String>) -> Result<YamlMap> {
+    let mut data: YamlMap = HashMap::new();
+    let mut block_no: String = "".to_string();
     let mut matched_node = false;
 
     let re1 = regex_new(REGEX_YAML_LEVEL_1_NODE)?;
@@ -278,10 +284,10 @@ pub fn regex_yaml_locate_key(
                 let key = cap[1].to_string();
                 let val = cap[2].to_string();
                 if txt.trim_start().starts_with('-') {
-                    block_name = val;
+                    block_no = val;
                     continue;
                 }
-                data.entry(block_name.clone())
+                data.entry(block_no.clone())
                     .or_insert_with(HashMap::new)
                     .insert(key, (num, val, txt));
             }

@@ -2,7 +2,7 @@
 use crate::processor::{
     json_array_only_first_element_warning, json_get_field_to_string, json_get_field_to_u16,
 };
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -17,18 +17,18 @@ pub enum ServInfo {
 #[allow(unused)]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct InfoHysteria2 {
-    server: String,
-    port: u16,
-    password: String,
+    pub server: String,
+    pub port: u16,
+    pub password: String,
 }
 
 #[allow(unused)]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct InfoMieru {
-    server: String,
-    port: u16,
-    username: String,
-    password: String,
+    pub server: String,
+    pub port: u16,
+    pub username: String,
+    pub password: String,
 }
 
 #[allow(unused)]
@@ -36,8 +36,23 @@ impl ServInfo {
     pub fn new_mieru() -> Self {
         ServInfo::Mieru(Vec::new())
     }
+
     pub fn new_hysteria2() -> Self {
         ServInfo::Hysteria2(Vec::new())
+    }
+
+    pub fn as_mieru(&self) -> Option<&Vec<InfoMieru>> {
+        match self {
+            ServInfo::Mieru(m) => Some(m),
+            _ => None,
+        }
+    }
+
+    pub fn as_hysteria2(&self) -> Option<&Vec<InfoHysteria2>> {
+        match self {
+            ServInfo::Hysteria2(h) => Some(h),
+            _ => None,
+        }
     }
 
     /// # 获取json关键字段并存储

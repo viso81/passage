@@ -1,0 +1,100 @@
+mixed-port: 7890
+allow-lan: false
+mode: rule
+log-level: info
+ipv6: true
+
+external-controller: 127.0.0.1:9090
+
+tun:
+  enable: true
+  stack: mixed
+  auto-route: true
+  auto-detect-interface: true
+  dns-hijack:
+    - any:53
+
+dns:
+  enable: true
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.0/15
+  fake-ip-filter:
+    - "*.lan"
+    - "localhost.ptlogin2.qq.com"
+  nameserver:
+    - 119.29.29.29
+    - 223.5.5.5
+  fallback:
+    - 8.8.8.8
+    - 1.1.1.1
+  fallback-filter:
+    geoip: true
+    geoip-code: CN
+
+proxies:
+  - name: hysteria2
+    type: hysteria2
+    server: 62.210.124.132
+    port: 64772
+    password: "github.com/Alvin9999-newpac/fanqiang"
+    sni: bing.com
+    skip-cert-verify: true
+    up: "11 Mbps"
+    down: "55 Mbps"
+
+  - name: mieru
+    type: mieru
+    server: 156.225.88.93
+    port: 19022
+    transport: TCP
+    username: tcp_yuyys0xg
+    password: 8n2IZjc7vUJPPEqm
+    udp: true
+    multiplexing: MULTIPLEXING_OFF
+
+proxy-groups:
+  - name: 🚀 节点选择
+    type: select
+    proxies:
+      - ♻️ 自动选择
+      - hysteria2
+      - mieru
+      - DIRECT
+
+  - name: ♻️ 自动选择
+    type: fallback
+    url: "https://www.gstatic.com/generate_204"
+    interval: 30
+    proxies:
+      - hysteria2
+      - mieru
+
+  - name: 🎯 全球直连
+    type: select
+    proxies:
+      - DIRECT
+      - 🚀 节点选择
+
+rule-providers:
+  gfw:
+    type: http
+    behavior: domain
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/gfw.txt"
+    path: ./ruleset/gfw.yaml
+    interval: 86400
+  cn:
+    type: http
+    behavior: domain
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/direct.txt"
+    path: ./ruleset/cn.yaml
+    interval: 86400
+
+rules:
+  - PROCESS-NAME,lyrebird.exe,mieru
+  - DOMAIN-SUFFIX,pixiv.net,mieru # pixiv 只用mieru
+  - DOMAIN-SUFFIX,pximg.net,mieru # pixiv
+  - PROCESS-NAME,Code.exe,🚀 节点选择
+  - RULE-SET,gfw,🚀 节点选择
+  - RULE-SET,cn,🎯 全球直连
+  - GEOIP,CN,🎯 全球直连
+  - MATCH,🎯 全球直连
